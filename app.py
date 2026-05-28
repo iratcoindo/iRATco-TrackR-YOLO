@@ -285,32 +285,32 @@ def negative_mouse_view(frame):
         cv2.COLOR_BGR2GRAY
     )
 
-# =========================
-# NEGATIVE MODE
-# =========================
-if contrast_mode == "Bright object":
-
-    # background gelap + mouse putih
-    neg = cv2.bitwise_not(gray)
-
-else:
-
-    # background putih + mouse hitam
-    neg = gray.copy()
-
-    # CLAHE supaya detail arena tetap muncul
-    clahe = cv2.createCLAHE(
-        clipLimit=2.0,
-        tileGridSize=(8,8)
-    )
-
-    neg = clahe.apply(neg)
-
-    # thermal-like colormap
-    neg = cv2.applyColorMap(
-        neg,
-        cv2.COLORMAP_BONE
-    )
+    # =========================
+    # NEGATIVE MODE
+    # =========================
+    if contrast_mode == "Bright object":
+    
+        # background gelap + mouse putih
+        neg = cv2.bitwise_not(gray)
+    
+    else:
+    
+        # background putih + mouse hitam
+        neg = gray.copy()
+    
+        # CLAHE supaya detail arena tetap muncul
+        clahe = cv2.createCLAHE(
+            clipLimit=2.0,
+            tileGridSize=(8,8)
+        )
+    
+        neg = clahe.apply(neg)
+    
+        # thermal-like colormap
+        neg = cv2.applyColorMap(
+            neg,
+            cv2.COLORMAP_BONE
+        )
 
     # =========================
     # FOREGROUND MASK
