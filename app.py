@@ -277,6 +277,9 @@ with c2:
 
 def negative_mouse_view(frame):
 
+    # =========================
+    # NEGATIVE THERMAL STYLE
+    # =========================
     gray = cv2.cvtColor(
         frame,
         cv2.COLOR_BGR2GRAY
@@ -284,6 +287,7 @@ def negative_mouse_view(frame):
 
     neg = cv2.bitwise_not(gray)
 
+    # CLAHE supaya detail arena tetap muncul
     clahe = cv2.createCLAHE(
         clipLimit=2.0,
         tileGridSize=(8,8)
@@ -291,11 +295,15 @@ def negative_mouse_view(frame):
 
     neg = clahe.apply(neg)
 
+    # thermal-like colormap
     neg = cv2.applyColorMap(
         neg,
         cv2.COLORMAP_BONE
     )
 
+    # =========================
+    # FOREGROUND MASK
+    # =========================
     fgmask = bg_sub.apply(frame)
 
     kernel = np.ones((5,5), np.uint8)
@@ -312,20 +320,60 @@ def negative_mouse_view(frame):
         kernel
     )
 
-    alpha = 0.7
-
-    red_overlay = np.zeros_like(neg)
-    red_overlay[:] = (0,0,255)
-
-    mask = fgmask > 0
-
-    neg[mask] = cv2.addWeighted(
-        neg[mask],
-        1-alpha,
-        red_overlay[mask],
-        alpha,
-        0
+    # =========================
+    # AREA FILTER
+    # =========================
+    contours, _ = cv2.findContours(
+        fgmask,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
     )
+
+    if len(contours) > 0:
+
+        largest = max(
+            contours,
+            key=cv2.contourArea
+        )
+
+        area = cv2.contourArea(largest)
+
+        if area > 50:
+
+            # buat mask hanya untuk mouse
+            mouse_mask = np.zeros_like(
+                fgmask,
+                dtype=np.uint8
+            )
+
+            cv2.drawContours(
+                mouse_mask,
+                [largest],
+                -1,
+                255,
+                -1
+            )
+
+            # =========================
+            # TRANSPARENT RED OVERLAY
+            # =========================
+            overlay = neg.copy()
+
+            overlay[mouse_mask > 0] = [
+                0,    # B
+                0,    # G
+                255   # R
+            ]
+
+            alpha = 0.60
+
+            neg = cv2.addWeighted(
+                overlay,
+                alpha,
+                neg,
+                1 - alpha,
+                0
+            )
 
     return neg
 
