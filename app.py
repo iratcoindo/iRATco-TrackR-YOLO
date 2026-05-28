@@ -469,9 +469,9 @@ if uploaded_video and st.session_state.running:
             track.loc[track["step_distance"] < movement_threshold, "Xs"] = np.nan
             track.loc[track["step_distance"] < movement_threshold, "Ys"] = np.nan
 
-            track["Xs"].fillna(method="ffill", inplace=True)
-            track["Ys"].fillna(method="ffill", inplace=True)
-
+            track["Xs"] = track["Xs"].ffill()
+            track["Ys"] = track["Ys"].ffill()
+            
             dt = skip / fps
             track["velocity"] = track["step_distance"] / dt
             track["cumulative_distance"] = track["step_distance"].fillna(0).cumsum()
