@@ -277,6 +277,21 @@ with c2:
 
 def negative_mouse_view(frame):
 
+    gray = cv2.cvtColor(
+        frame,
+        cv2.COLOR_BGR2GRAY
+    )
+
+    neg = cv2.bitwise_not(gray)
+
+    # CLAHE supaya detail arena muncul
+    clahe = cv2.createCLAHE(
+        clipLimit=2.0,
+        tileGridSize=(8,8)
+    )
+
+    neg = clahe.apply(neg)
+
     fgmask = bg_sub.apply(frame)
 
     kernel = np.ones((5,5), np.uint8)
@@ -287,12 +302,21 @@ def negative_mouse_view(frame):
         kernel
     )
 
-    vis = cv2.cvtColor(
+    fgmask = cv2.morphologyEx(
         fgmask,
+        cv2.MORPH_CLOSE,
+        kernel
+    )
+
+    neg = cv2.cvtColor(
+        neg,
         cv2.COLOR_GRAY2BGR
     )
 
-    return vis
+    # mouse merah terang
+    neg[fgmask > 0] = [0,0,255]
+
+    return neg
 
 def detect_mouse(frame):
 
