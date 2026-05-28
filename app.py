@@ -11,6 +11,11 @@ import io
 import time
 from matplotlib.colors import LinearSegmentedColormap
 
+bg_sub = cv2.createBackgroundSubtractorMOG2(
+    history=2000,
+    varThreshold=25,
+    detectShadows=False
+)
 
 # PAGE CONFIG
 st.set_page_config(
@@ -271,35 +276,70 @@ with c2:
         st.session_state.paused = False
 
 def negative_mouse_view(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    inv = cv2.bitwise_not(gray)
+    fgmask = bg_sub.apply(frame)
 
-    if contrast_mode == "Bright object":
-        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
-    else:
-        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+    kernel = np.ones((5,5), np.uint8)
 
-    neg_frame = cv2.cvtColor(inv, cv2.COLOR_GRAY2BGR)
-    neg_frame[mask > 0] = [0, 0, 255]
+    fgmask = cv2.morphologyEx(
+        fgmask,
+        cv2.MORPH_OPEN,
+        kernel
+    )
 
-    return neg_frame
+    vis = cv2.cvtColor(
+        fgmask,
+        cv2.COLOR_GRAY2BGR
+    )
+
+    return vis
 
 def detect_mouse(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    if contrast_mode == "Bright object":
-        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
-    else:
-        _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+    fgmask = bg_sub.apply(frame)
 
-    coords = np.column_stack(np.where(mask > 0))
+    kernel = np.ones((5,5), np.uint8)
 
-    if len(coords) == 0:
+    fgmask = cv2.morphologyEx(
+        fgmask,
+        cv2.MORPH_OPEN,
+        kernel
+    )
+
+    fgmask = cv2.morphologyEx(
+        fgmask,
+        cv2.MORPH_CLOSE,
+        kernel
+    )
+
+    contours, _ = cv2.findContours(
+        fgmask,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    if len(contours) == 0:
         return None, None
 
-    y, x = coords.mean(axis=0)
-    return int(x), int(y)
+    largest = max(
+        contours,
+        key=cv2.contourArea
+    )
+
+    area = cv2.contourArea(largest)
+
+    if area < 30:
+        return None, None
+
+    M = cv2.moments(largest)
+
+    if M["m00"] == 0:
+        return None, None
+
+    cx = int(M["m10"] / M["m00"])
+    cy = int(M["m01"] / M["m00"])
+
+    return cx, cy
 
 if uploaded_video and st.session_state.running:
     cap = cv2.VideoCapture(st.session_state.video_path)
