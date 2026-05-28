@@ -285,7 +285,18 @@ def negative_mouse_view(frame):
         cv2.COLOR_BGR2GRAY
     )
 
+# =========================
+# NEGATIVE MODE
+# =========================
+if contrast_mode == "Bright object":
+
+    # background gelap + mouse putih
     neg = cv2.bitwise_not(gray)
+
+else:
+
+    # background putih + mouse hitam
+    neg = gray.copy()
 
     # CLAHE supaya detail arena tetap muncul
     clahe = cv2.createCLAHE(
