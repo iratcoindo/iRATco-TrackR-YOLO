@@ -734,8 +734,6 @@ if uploaded_video and st.session_state.running:
                 ax3.set_title(
                     "Velocity (mm/s)"
                 )
-                vel_plot.pyplot(fig3)
-                plt.close(fig3)
 
                 ax3.text(
                     0.02,
@@ -774,6 +772,9 @@ if uploaded_video and st.session_state.running:
                         edgecolor="gray"
                     )
                 )
+
+                vel_plot.pyplot(fig3)
+                plt.close(fig3)
 
                 # Visit Frequency Heatmap (tanpa trajectory)
                 if len(track) > 20:
