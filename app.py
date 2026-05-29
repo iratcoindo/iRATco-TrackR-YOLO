@@ -599,6 +599,25 @@ if uploaded_video and st.session_state.running:
             
             dt = skip / fps
             track["velocity"] = track["step_distance"] / dt
+            # filter spike tunggal
+            track["velocity"] = (
+                track["velocity"]
+                .rolling(5, center=True)
+                .median()
+            )
+            
+            # hitung mean gerakan normal
+            mean_vel = track.loc[
+                track["velocity"] > movement_threshold,
+                "velocity"
+            ].mean()
+            
+            # buang artifact tracking
+            track.loc[
+                track["velocity"] > (5 * mean_vel),
+                "velocity"
+            ] = np.nan
+            
             track["cumulative_distance"] = track["step_distance"].fillna(0).cumsum()
 
             track["bearing"] = np.arctan2(track["dy"], track["dx"])
