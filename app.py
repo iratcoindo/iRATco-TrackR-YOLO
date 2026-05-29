@@ -737,6 +737,44 @@ if uploaded_video and st.session_state.running:
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
+                ax3.text(
+                    0.02,
+                    0.95,
+                    f"Mean = {mean_velocity:.2f} mm/s",
+                    transform=ax3.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    fontweight="bold",
+                    bbox=dict(
+                        facecolor="white",
+                        alpha=0.8,
+                        edgecolor="gray"
+                    )
+                )
+
+                current_velocity = (
+                    track["velocity"]
+                    .dropna()
+                    .iloc[-1]
+                    if track["velocity"].notna().sum() > 0
+                    else 0
+                )
+                ax3.text(
+                    0.02,
+                    0.82,
+                    f"Current = {current_velocity:.2f} mm/s",
+                    transform=ax3.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    bbox=dict(
+                        facecolor="white",
+                        alpha=0.8,
+                        edgecolor="gray"
+                    )
+                )
+
                 # Visit Frequency Heatmap (tanpa trajectory)
                 if len(track) > 20:
                     fig4, ax4 = plt.subplots()
