@@ -665,6 +665,10 @@ if uploaded_video and st.session_state.running:
 
             if frame_id % 20 == 0:
                 # Movement Trajectory = dwell time movement trajectory
+
+                roi_width_mm = width * st.session_state.pixel_to_mm
+                roi_height_mm = height * st.session_state.pixel_to_mm
+                
                 fig1, ax1 = plt.subplots(figsize=(6, 5))
                 traj_data = track[["Xs", "Ys"]].dropna()
 
@@ -692,26 +696,93 @@ if uploaded_video and st.session_state.running:
                     im1 = ax1.imshow(
                         heatmap_smooth.T,
                         origin="lower",
-                        extent=[0, width, 0, height],
+                        extent=[
+                            0,
+                            roi_width_mm,
+                            0,
+                            roi_height_mm
+                        ],
                         aspect="equal",
                         cmap=dwell_cmap,
                         interpolation="bilinear"
                     )
 
-                    ax1.plot(track["Xs"], track["Ys"], color="black", alpha=0.35, linewidth=1)
+                    ax1.plot(
+                        track["Xs"] * st.session_state.pixel_to_mm,
+                        track["Ys"] * st.session_state.pixel_to_mm,
+                        color="black",
+                        alpha=0.35,
+                        linewidth=1
+                    )
 
                     cbar1 = fig1.colorbar(im1, ax=ax1, shrink=0.8)
                     cbar1.set_label("Dwell Time (s)")
 
                 ax1.set_title("Movement Trajectory")
-                ax1.set_xlabel("X")
-                ax1.set_ylabel("Y")
+                ax1.set_xlabel("X (mm)")
+                ax1.set_ylabel("Y (mm)")
                 traj_plot.pyplot(fig1)
                 plt.close(fig1)
 
-                fig2, ax2 = plt.subplots()
-                ax2.plot(track["cumulative_distance"])
-                ax2.set_title("Cumulative Distance (mm)")
+                fig2, ax2 = plt.subplots(
+                    figsize=(6,4)
+                )
+                
+                ax2.plot(
+                    track["cumulative_distance"],
+                    linewidth=1.5
+                )
+                
+                current_distance = (
+                    track["cumulative_distance"]
+                    .iloc[-1]
+                )
+                
+                current_time = (
+                    len(track) * dt
+                )
+                
+                ax2.text(
+                    0.02,
+                    0.95,
+                    f"Distance = {current_distance:.1f} mm",
+                    transform=ax2.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    fontweight="bold",
+                    bbox=dict(
+                        facecolor="white",
+                        alpha=0.8
+                    )
+                )
+                
+                ax2.text(
+                    0.02,
+                    0.82,
+                    f"Time = {current_time:.1f} s",
+                    transform=ax2.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    bbox=dict(
+                        facecolor="white",
+                        alpha=0.8
+                    )
+                )
+                
+                ax2.set_title(
+                    "Cumulative Distance (mm)"
+                )
+                
+                ax2.set_xlabel(
+                    "Frame"
+                )
+                
+                ax2.set_ylabel(
+                    "Distance (mm)"
+                )
+                
                 dist_plot.pyplot(fig2)
                 plt.close(fig2)
 
