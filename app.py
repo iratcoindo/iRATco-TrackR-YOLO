@@ -607,7 +607,25 @@ if uploaded_video and st.session_state.running:
             track["turn_angle"] = track["bearing_deg"].diff()
             track["turn_angle"] = (track["turn_angle"] + 180) % 360 - 180
 
-            mean_velocity = track["velocity"].mean()
+            moving_velocity = track.loc[
+                track["velocity"] > movement_threshold,
+                "velocity"
+            ]
+
+            if len(moving_velocity) > 0:
+                mean_velocity = moving_velocity.mean()
+            else:
+                mean_velocity = 0
+
+            # minimal 5 frame berturut-turut bergerak
+            track["moving"] = (
+                track["velocity"] > movement_threshold
+            ).rolling(5).sum() >= 5
+            
+            track.loc[
+                ~track["moving"],
+                "velocity"
+            ] = np.nan
 
             # freezing
             freezing_threshold = 0.5
@@ -697,9 +715,25 @@ if uploaded_video and st.session_state.running:
                 dist_plot.pyplot(fig2)
                 plt.close(fig2)
 
-                fig3, ax3 = plt.subplots()
-                ax3.plot(track["velocity"])
-                ax3.set_title("Velocity (mm/s)")
+                fig3, ax3 = plt.subplots(figsize=(6,4))
+
+                ax3.plot(
+                    track["velocity"],
+                    linewidth=1.5
+                )
+                
+                # garis mean
+                ax3.axhline(
+                    mean_velocity,
+                    color="red",
+                    linestyle="--",
+                    linewidth=2,
+                    alpha=0.8
+                )
+                
+                ax3.set_title(
+                    "Velocity (mm/s)"
+                )
                 vel_plot.pyplot(fig3)
                 plt.close(fig3)
 
